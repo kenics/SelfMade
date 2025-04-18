@@ -3,15 +3,35 @@ import os
 import time
 import openai
 from datetime import datetime
+import sys
 
-# === 設定 ===
-AGENT_SCRIPT_PATH = r"D:\EchoCodeForge\agent1.py"
-LOG_PATH = "run_log.txt"
-QA_LOG_PATH = "QA.txt"
+# --- パス設定 ---
+BASE_DIR = os.path.dirname(__file__)
 PROJECT_ROOT = r"D:\EchoCodeForge"
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  # 環境変数で設定しておくこと
+AGENT_SCRIPT_PATH = os.path.join(PROJECT_ROOT, "agent1.py")
+LOG_PATH = os.path.join(BASE_DIR, "run_log.txt")
+QA_LOG_PATH = os.path.join(BASE_DIR, "QA.txt")
 
-openai.api_key = OPENAI_API_KEY
+# --- モジュール検索パス追加 ---
+sys.path.append(os.path.join(BASE_DIR, "Config"))
+sys.path.append(os.path.join(BASE_DIR, "AutoFixer"))
+
+# --- モジュールインポート ---
+from ConfigLoader import ConfigLoader
+from fixer import detect_syntax_error_line, extract_error_message
+from file_editor import (
+    read_context_lines,
+    replace_line_in_file,
+    replace_function_in_file,
+    write_new_class_file
+)
+from utils import extract_python_code_from_response, extract_class_name_from_code
+
+# --- OpenAI API キー設定 ---
+loader = ConfigLoader()
+openai.api_key = loader.get_secret("openai_api_key")
+
+# === ユーティリティ関数 ===
 
 def wait_for_run_command():
     while True:
@@ -41,52 +61,100 @@ def run_agent_script():
 
     return stdout, stderr
 
-def detect_syntax_or_runtime_error(log_text):
+def detect_error_type(log_text):
     if "SyntaxError" in log_text or "IndentationError" in log_text:
         return "syntax"
     elif "Traceback" in log_text:
         return "runtime"
     return None
 
-def extract_error_details(log_text):
-    lines = log_text.splitlines()
-    for line in lines:
-        if ".py" in line and (("SyntaxError" in line) or ("Traceback" in line)):
-            return line.strip()
-    return "詳細不明のエラー"
-
 def send_to_chatgpt(question):
     append_log(QA_LOG_PATH, "【質問】" + question)
     response = openai.ChatCompletion.create(
         model="gpt-4",
-        messages=[
-            {"role": "user", "content": question}
-        ]
+        messages=[{"role": "user", "content": question}]
     )
     answer = response["choices"][0]["message"]["content"]
     append_log(QA_LOG_PATH, "【回答】" + answer)
     return answer
 
+# === メイン処理 ===
+
 def main():
     wait_for_run_command()
     stdout, stderr = run_agent_script()
-
     log_text = stdout + "\n" + stderr
-    error_type = detect_syntax_or_runtime_error(log_text)
+
+    error_type = detect_error_type(log_text)
 
     if error_type == "syntax":
-        print("⚠ 文法エラー検出。対象ファイルを修正します（手動または自動で対応）")
-        error_info = extract_error_details(log_text)
-        print("エラー内容:", error_info)
-        # TODO: error_info から対象ファイル名・行番号を抽出して、自動修正を行う処理を追加
+        print("⚠ 文法エラー検出。修正処理を開始します。")
+        filepath, lineno = detect_syntax_error_line(log_text, PROJECT_ROOT)
+        if filepath and lineno:
+            abs_path = os.path.join(PROJECT_ROOT, filepath)
+            print(f"\n対象ファイル: {filepath}（{lineno}行目）")
+
+            print("\n--- 該当行とその前後 ---")
+            for lineno_i, line_text in read_context_lines(abs_path, lineno):
+                print(f"{lineno_i}: {line_text}")
+
+            new_code = input(f"\n{filepath}:{lineno} に置き換えるコードを入力してください:\n> ").strip()
+            if replace_line_in_file(abs_path, lineno, new_code):
+                print("✅ 修正完了")
+            else:
+                print("❌ 修正失敗：行番号が範囲外です")
+
     elif error_type == "runtime":
-        print("⚠ 実行時エラー検出。ChatGPTに問い合わせます。")
-        error_info = extract_error_details(log_text)
-        answer = send_to_chatgpt(f"以下のPython実行エラーを修正したい:\n{log_text}\nエラー: {error_info}")
-        print("ChatGPTの回答:", answer)
-        # TODO: 回答に応じて修正・新規クラス追加などを行う処理を追加
+        print("⚠ 実行時エラー検出。ChatGPT に問い合わせます。")
+        question = f"以下のPython実行時エラーを修正してください:\n{log_text}"
+        answer = send_to_chatgpt(question)
+        print("ChatGPTの回答:\n", answer)
+
+        # ChatGPT の回答からコードを抽出
+        code = extract_python_code_from_response(answer)
+        error_type_detail, error_message = extract_error_type_and_message(log_text)
+
+        if error_type_detail:
+            print(f"\n🔎 エラー種別: {error_type_detail}")
+            print(f"📝 エラー内容: {error_message}")
+
+            if error_type_detail == "SyntaxError":
+                # → クラス or 関数の自動修正処理へ
+                if code:
+                    class_name = extract_class_name_from_code(code)
+                    if class_name:
+                        print(f"🆕 クラス {class_name} を新規作成します")
+                        if write_new_class_file(PROJECT_ROOT, class_name, code):
+                            print(f"✅ {class_name}.py を作成しました")
+                        else:
+                            print("❌ ファイルの作成に失敗しました（既存の可能性あり）")
+                    else:
+                        filepath, _ = detect_syntax_error_line(log_text, PROJECT_ROOT)
+                        abs_path = os.path.join(PROJECT_ROOT, filepath)
+                        function_name = input("修正対象の関数名を入力してください: ").strip()
+                        if replace_function_in_file(abs_path, function_name, code):
+                            print(f"✅ {function_name} 関数を自動修正しました。")
+                        else:
+                            print("❌ 関数置換に失敗しました。")
+                else:
+                    print("❌ ChatGPTの回答にコードが見つかりませんでした。")
+
+            elif error_type_detail in ("ImportError", "ModuleNotFoundError"):
+                print("🛠 モジュールのインポートに関するエラーです。依存ライブラリの確認が必要です。")
+                # TODO: requirements.txt チェック or ChatGPT に import 修正を問い合わせる
+
+            elif error_type_detail in ("TypeError", "ValueError"):
+                print("🔧 実行中の型エラー・値エラーです。関数引数や戻り値の確認を進めます。")
+                # TODO: 関数の引数と使い方の見直しを ChatGPT に聞くなど
+
+            else:
+                print(f"⚠ その他のエラータイプです（{error_type_detail}）。ログを確認してください。")
+
+        else:
+            print("❌ エラー種別を特定できませんでした。")
+
     else:
-        print("✅ エラーは検出されませんでした。")
+        print("✅ 実行成功。エラーなし。")
 
 if __name__ == "__main__":
     main()

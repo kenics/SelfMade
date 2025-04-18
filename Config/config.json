@@ -1,0 +1,15 @@
+{
+  "_comment": "このファイルは動制を御します",
+
+  "_comment_model": "使用するモデル名 gpt-4 や gpt-3.5-turbo",
+  "default_model": "gpt-4",
+
+  "_comment_ai": "true なら OpenAI に問い合わせる,false にするとオフラインモード(ask_chatgpt_for_dsl() をスキップ)",
+  "ai_enabled": false,
+
+  "_comment_save": "true なら OpenAI の応答をファイルに保存する",
+  "save_response_to_file": true,
+
+  "_comment_load": "true なら保存済みファイルから DSL を読み込む（OpenAI に問い合わせない ai_enabled は無視）",
+  "load_response_from_file": true
+}
