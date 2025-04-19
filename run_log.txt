@@ -235,3 +235,151 @@ Traceback (most recent call last):
                       ^
 SyntaxError: '(' was never closed
 
+[2025-04-18 18:23:35] === 実行開始 ===
+
+Traceback (most recent call last):
+  File "D:\EchoCodeForge\agent1.py", line 4, in <module>
+    agent = CodingAIAgent()
+            ^^^^^^^^^^^^^^^
+  File "D:\EchoCodeForge\Sb3BlockGen\CodingAIAgent.py", line 28, in __init__
+    self._prepare_dsl_env()
+  File "D:\EchoCodeForge\Sb3BlockGen\CodingAIAgent.py", line 40, in _prepare_dsl_env
+    from Sb3BlockGen.Script import Script
+  File "D:\EchoCodeForge\Sb3BlockGen\Script.py", line 8
+    self.blocks.append(starting_block
+                      ^
+SyntaxError: '(' was never closed
+
+[2025-04-18 18:25:55] === 実行開始 ===
+
+Traceback (most recent call last):
+  File "D:\EchoCodeForge\agent1.py", line 2, in <module>
+    from Sb3BlockGen.CodingAIAgent import CodingAIAgent
+  File "D:\EchoCodeForge\Sb3BlockGen\CodingAIAgent.py", line 1, in <module>
+    from openai import OpenAI
+ImportError: cannot import name 'OpenAI' from 'openai' (C:\Users\kenic\AppData\Local\Programs\Python\Python312\Lib\site-packages\openai\__init__.py)
+
+[2025-04-18 18:40:56] === 実行開始 ===
+
+Traceback (most recent call last):
+  File "D:\EchoCodeForge\agent1.py", line 2, in <module>
+    from Sb3BlockGen.CodingAIAgent import CodingAIAgent
+  File "D:\EchoCodeForge\Sb3BlockGen\CodingAIAgent.py", line 1, in <module>
+    from openai import OpenAI
+ImportError: cannot import name 'OpenAI' from 'openai' (C:\Users\kenic\AppData\Local\Programs\Python\Python312\Lib\site-packages\openai\__init__.py)
+
+[2025-04-19 15:10:48] === 実行開始 ===
+
+Traceback (most recent call last):
+  File "D:\EchoCodeForge\agent1.py", line 2, in <module>
+    from Sb3BlockGen.CodingAIAgent import CodingAIAgent
+  File "D:\EchoCodeForge\Sb3BlockGen\CodingAIAgent.py", line 1, in <module>
+    from openai import OpenAI
+ImportError: cannot import name 'OpenAI' from 'openai' (C:\Users\kenic\AppData\Local\Programs\Python\Python312\Lib\site-packages\openai\__init__.py)
+
+[2025-04-19 15:11:37] === 実行開始 ===
+
+Traceback (most recent call last):
+  File "D:\EchoCodeForge\agent1.py", line 2, in <module>
+    from Sb3BlockGen.CodingAIAgent import CodingAIAgent
+  File "D:\EchoCodeForge\Sb3BlockGen\CodingAIAgent.py", line 1, in <module>
+    from openai import OpenAI
+ImportError: cannot import name 'OpenAI' from 'openai' (C:\Users\kenic\AppData\Local\Programs\Python\Python312\Lib\site-packages\openai\__init__.py)
+
+[2025-04-19 15:14:27] === 実行開始 ===
+
+Traceback (most recent call last):
+  File "D:\EchoCodeForge\agent1.py", line 4, in <module>
+    agent = CodingAIAgent()
+            ^^^^^^^^^^^^^^^
+  File "D:\EchoCodeForge\Sb3BlockGen\CodingAIAgent.py", line 25, in __init__
+    self.client = OpenAI(api_key=self.api_key)
+                  ^^^^^^
+NameError: name 'OpenAI' is not defined. Did you mean: 'openai'?
+
+[2025-04-19 15:18:45] === 実行開始 ===
+
+Traceback (most recent call last):
+  File "D:\EchoCodeForge\agent1.py", line 4, in <module>
+    agent = CodingAIAgent()
+            ^^^^^^^^^^^^^^^
+  File "D:\EchoCodeForge\Sb3BlockGen\CodingAIAgent.py", line 25, in __init__
+    self.client = OpenAI(api_key=self.api_key)
+                  ^^^^^^
+NameError: name 'OpenAI' is not defined. Did you mean: 'openai'?
+
+[2025-04-19 15:21:01] === 実行開始 ===
+
+Traceback (most recent call last):
+  File "D:\EchoCodeForge\agent1.py", line 4, in <module>
+    agent = CodingAIAgent()
+            ^^^^^^^^^^^^^^^
+  File "D:\EchoCodeForge\Sb3BlockGen\CodingAIAgent.py", line 27, in __init__
+    self._prepare_dsl_env()
+  File "D:\EchoCodeForge\Sb3BlockGen\CodingAIAgent.py", line 39, in _prepare_dsl_env
+    from Sb3BlockGen.Script import Script
+  File "D:\EchoCodeForge\Sb3BlockGen\Script.py", line 8
+    self.blocks.append(starting_block
+                      ^
+SyntaxError: '(' was never closed
+
+[2025-04-19 15:35:12] === 実行開始 ===
+
+Traceback (most recent call last):
+  File "D:\EchoCodeForge\agent1.py", line 4, in <module>
+    agent = CodingAIAgent()
+            ^^^^^^^^^^^^^^^
+  File "D:\EchoCodeForge\Sb3BlockGen\CodingAIAgent.py", line 27, in __init__
+    self._prepare_dsl_env()
+  File "D:\EchoCodeForge\Sb3BlockGen\CodingAIAgent.py", line 39, in _prepare_dsl_env
+    from Sb3BlockGen.Script import Script
+  File "D:\EchoCodeForge\Sb3BlockGen\Script.py", line 8
+    self.blocks.append(starting_block
+                      ^
+SyntaxError: '(' was never closed
+
+[2025-04-19 15:37:11] === 実行開始 ===
+
+Traceback (most recent call last):
+  File "D:\EchoCodeForge\agent1.py", line 4, in <module>
+    agent = CodingAIAgent()
+            ^^^^^^^^^^^^^^^
+  File "D:\EchoCodeForge\Sb3BlockGen\CodingAIAgent.py", line 27, in __init__
+    self._prepare_dsl_env()
+  File "D:\EchoCodeForge\Sb3BlockGen\CodingAIAgent.py", line 39, in _prepare_dsl_env
+    from Sb3BlockGen.Script import Script
+  File "D:\EchoCodeForge\Sb3BlockGen\Script.py", line 8
+    self.blocks.append(starting_block
+                      ^
+SyntaxError: '(' was never closed
+
+[2025-04-19 15:50:18] === 実行開始 ===
+
+Traceback (most recent call last):
+  File "D:\EchoCodeForge\agent1.py", line 4, in <module>
+    agent = CodingAIAgent()
+            ^^^^^^^^^^^^^^^
+  File "D:\EchoCodeForge\Sb3BlockGen\CodingAIAgent.py", line 27, in __init__
+    self._prepare_dsl_env()
+  File "D:\EchoCodeForge\Sb3BlockGen\CodingAIAgent.py", line 39, in _prepare_dsl_env
+    from Sb3BlockGen.Script import Script
+  File "D:\EchoCodeForge\Sb3BlockGen\Script.py", line 8
+    self.blocks.append(starting_block
+                      ^
+SyntaxError: '(' was never closed
+
+[2025-04-19 15:52:26] === 実行開始 ===
+
+Traceback (most recent call last):
+  File "D:\EchoCodeForge\agent1.py", line 4, in <module>
+    agent = CodingAIAgent()
+            ^^^^^^^^^^^^^^^
+  File "D:\EchoCodeForge\Sb3BlockGen\CodingAIAgent.py", line 27, in __init__
+    self._prepare_dsl_env()
+  File "D:\EchoCodeForge\Sb3BlockGen\CodingAIAgent.py", line 39, in _prepare_dsl_env
+    from Sb3BlockGen.Script import Script
+  File "D:\EchoCodeForge\Sb3BlockGen\Script.py", line 8
+    self.blocks.append(starting_block
+                      ^
+SyntaxError: '(' was never closed
+

@@ -18,18 +18,28 @@ sys.path.append(os.path.join(BASE_DIR, "AutoFixer"))
 
 # --- モジュールインポート ---
 from ConfigLoader import ConfigLoader
-from fixer import detect_syntax_error_line, extract_error_message
+
+from fixer import (
+    detect_syntax_error_line,
+    extract_error_message,
+    extract_error_type_and_message  # ← 正しく定義されていればOK
+)
+
 from file_editor import (
     read_context_lines,
     replace_line_in_file,
     replace_function_in_file,
     write_new_class_file
 )
-from utils import extract_python_code_from_response, extract_class_name_from_code
+from utils import (
+    extract_python_code_from_response,
+    extract_class_name_from_code
+)
 
 # --- OpenAI API キー設定 ---
 loader = ConfigLoader()
-openai.api_key = loader.get_secret("openai_api_key")
+api_key = loader.get_secret("openai_api_key")
+client = openai.OpenAI(api_key=api_key)
 
 # === ユーティリティ関数 ===
 
@@ -68,13 +78,13 @@ def detect_error_type(log_text):
         return "runtime"
     return None
 
-def send_to_chatgpt(question):
+def send_to_chatgpt(question,client):
     append_log(QA_LOG_PATH, "【質問】" + question)
-    response = openai.ChatCompletion.create(
+    response = client.chat.completions.create(
         model="gpt-4",
         messages=[{"role": "user", "content": question}]
     )
-    answer = response["choices"][0]["message"]["content"]
+    answer = response.choices[0].message.content
     append_log(QA_LOG_PATH, "【回答】" + answer)
     return answer
 
@@ -95,22 +105,65 @@ def main():
             print(f"\n対象ファイル: {filepath}（{lineno}行目）")
 
             print("\n--- 該当行とその前後 ---")
-            for lineno_i, line_text in read_context_lines(abs_path, lineno):
+            context_lines = read_context_lines(abs_path, lineno)
+            for lineno_i, line_text in context_lines:
                 print(f"{lineno_i}: {line_text}")
 
-            new_code = input(f"\n{filepath}:{lineno} に置き換えるコードを入力してください:\n> ").strip()
-            if replace_line_in_file(abs_path, lineno, new_code):
-                print("✅ 修正完了")
+            # ChatGPT に送るためのコード生成
+            context_code = "\n".join(line_text for _, line_text in context_lines)
+            chatgpt_question = (
+                f"以下のPythonコードには文法エラーがあります。\n"
+                f"{lineno} 行目付近に問題があります。文法的に正しい形に修正してください：\n\n"
+                f"```python\n{context_code}\n```"
+            )
+            # 1. 問い合わせ内容を表示
+            print("\n=== ChatGPT に送信する質問内容 ===\n")
+            print(chatgpt_question)
+            print("\nこの内容で問い合わせますか？（yes で問い合わせを実行）")
+            confirm = input("> ").strip().lower()
+
+            if confirm != "yes":
+                print("ChatGPTに問い合わせず、終了しました。")
+                return
+
+            answer = send_to_chatgpt(chatgpt_question,client)
+            print("ChatGPTの回答:\n", answer)
+
+            code = extract_python_code_from_response(answer)
+            if code:
+                new_code_lines = code.splitlines()
+                print("\n--- 修正後のコード ---")
+                for i, line in enumerate(new_code_lines, start=1):
+                    print(f"{i}: {line}")
+
+                confirm = input("このコードで置き換えますか？（y[yes]/n[no]）: ").strip().lower()
+                if confirm in( "y","yes"):
+                    for i, (lineno_i, original_line) in enumerate(context_lines):
+                        if i < len(new_code_lines):
+                            if new_line.rstrip() != original_line.rstrip():
+                                replace_line_in_file(abs_path, lineno_i, new_code_lines[i])
+                    print("✅ 該当行を修正しました。")
+                else:
+                    print("⚠ 修正をキャンセルしました。")
             else:
-                print("❌ 修正失敗：行番号が範囲外です")
+                print("❌ ChatGPTの回答に修正コードが見つかりませんでした。")
 
     elif error_type == "runtime":
         print("⚠ 実行時エラー検出。ChatGPT に問い合わせます。")
         question = f"以下のPython実行時エラーを修正してください:\n{log_text}"
-        answer = send_to_chatgpt(question)
+        # 1. 問い合わせ内容を表示
+        print("\n=== ChatGPT に送信する質問内容 ===\n")
+        print(question)
+        print("\nこの内容で問い合わせますか？（yes で実行）")
+        confirm = input("> ").strip().lower()
+
+        if confirm != "yes":
+            print("ChatGPTに問い合わせず、終了しました。")
+            return
+        
+        answer = send_to_chatgpt(question,client)
         print("ChatGPTの回答:\n", answer)
 
-        # ChatGPT の回答からコードを抽出
         code = extract_python_code_from_response(answer)
         error_type_detail, error_message = extract_error_type_and_message(log_text)
 
@@ -119,7 +172,16 @@ def main():
             print(f"📝 エラー内容: {error_message}")
 
             if error_type_detail == "SyntaxError":
-                # → クラス or 関数の自動修正処理へ
+                # このケースは通常 runtime には含まれないが念のため対応
+                pass
+
+            elif error_type_detail in ("ImportError", "ModuleNotFoundError"):
+                print("🛠 モジュールのインポートに関するエラーです。依存ライブラリの確認が必要です。")
+
+            elif error_type_detail in ("TypeError", "ValueError"):
+                print("🔧 実行中の型エラー・値エラーです。関数引数や戻り値の確認が必要です。")
+
+            else:
                 if code:
                     class_name = extract_class_name_from_code(code)
                     if class_name:
@@ -137,19 +199,7 @@ def main():
                         else:
                             print("❌ 関数置換に失敗しました。")
                 else:
-                    print("❌ ChatGPTの回答にコードが見つかりませんでした。")
-
-            elif error_type_detail in ("ImportError", "ModuleNotFoundError"):
-                print("🛠 モジュールのインポートに関するエラーです。依存ライブラリの確認が必要です。")
-                # TODO: requirements.txt チェック or ChatGPT に import 修正を問い合わせる
-
-            elif error_type_detail in ("TypeError", "ValueError"):
-                print("🔧 実行中の型エラー・値エラーです。関数引数や戻り値の確認を進めます。")
-                # TODO: 関数の引数と使い方の見直しを ChatGPT に聞くなど
-
-            else:
-                print(f"⚠ その他のエラータイプです（{error_type_detail}）。ログを確認してください。")
-
+                    print("❌ ChatGPTの回答に修正コードが見つかりませんでした。")
         else:
             print("❌ エラー種別を特定できませんでした。")
 
