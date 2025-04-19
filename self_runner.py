@@ -11,6 +11,7 @@ PROJECT_ROOT = r"D:\EchoCodeForge"
 AGENT_SCRIPT_PATH = os.path.join(PROJECT_ROOT, "agent1.py")
 LOG_PATH = os.path.join(BASE_DIR, "run_log.txt")
 QA_LOG_PATH = os.path.join(BASE_DIR, "QA.txt")
+QATEMP_LOG_PATH = os.path.join(BASE_DIR, "QAtemp.txt") 
 
 # --- モジュール検索パス追加 ---
 sys.path.append(os.path.join(BASE_DIR, "Config"))
@@ -18,6 +19,9 @@ sys.path.append(os.path.join(BASE_DIR, "AutoFixer"))
 
 # --- モジュールインポート ---
 from ConfigLoader import ConfigLoader
+from DeBug import DeBug
+
+debug = DeBug()
 
 from fixer import (
     detect_syntax_error_line,
@@ -40,6 +44,7 @@ from utils import (
 loader = ConfigLoader()
 api_key = loader.get_secret("openai_api_key")
 client = openai.OpenAI(api_key=api_key)
+ai_enabled = loader.get("ai_enabled", True)
 
 # === ユーティリティ関数 ===
 
@@ -80,14 +85,30 @@ def detect_error_type(log_text):
 
 def send_to_chatgpt(question,client):
     append_log(QA_LOG_PATH, "【質問】" + question)
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": question}]
-    )
-    answer = response.choices[0].message.content
-    append_log(QA_LOG_PATH, "【回答】" + answer)
-    return answer
+    if ai_enabled:
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": question}]
+        )
+        answer = response.choices[0].message.content
+        append_log(QA_LOG_PATH, "【回答】" + answer)
 
+        # --- QAtemp.txt: 回答だけを上書き保存 ---
+        with open(QATEMP_LOG_PATH, "w", encoding="utf-8") as f:
+            f.write(answer)
+
+        return answer
+    else:
+        # --- QAtemp.txt の内容を回答として読み込む ---
+        try:
+            with open(QATEMP_LOG_PATH, "r", encoding="utf-8") as f:
+                answer = f.read().strip()
+                print("💡 QAtemp.txt から回答を読み込みました。")
+                append_log(QA_LOG_PATH, "【回答（ファイルから）】" + answer)
+                return answer
+        except FileNotFoundError:
+            print("❌ QAtemp.txt が存在しません。")
+            return ""
 # === メイン処理 ===
 
 def main():
@@ -140,9 +161,16 @@ def main():
                 if confirm in( "y","yes"):
                     for i, (lineno_i, original_line) in enumerate(context_lines):
                         if i < len(new_code_lines):
-                            if new_line.rstrip() != original_line.rstrip():
+                            new_line = new_code_lines[i]
+                            if new_line.replace('\r', '').replace('\n', '').lstrip() != original_line.replace('\r', '').replace('\n', '').lstrip():
+                                debug.print(str(lineno_i) + "行目 " + original_line + " new:" + new_line)
                                 replace_line_in_file(abs_path, lineno_i, new_code_lines[i])
                     print("✅ 該当行を修正しました。")
+                    # --- Git diff を表示するか確認 ---
+                    show_diff = input("修正後の diff を表示しますか？（y[yes]/n[no]）: ").strip().lower()
+                    if show_diff in ("y", "yes"):
+                        print("\n=== Git Diff ===")
+                        os.system(f"git -C \"{PROJECT_ROOT}\" diff \"{abs_path}\"")
                 else:
                     print("⚠ 修正をキャンセルしました。")
             else:

@@ -7,9 +7,6 @@
   "_comment_ai": "true なら OpenAI に問い合わせる,false にするとオフラインモード(ask_chatgpt_for_dsl() をスキップ)",
   "ai_enabled": false,
 
-  "_comment_save": "true なら OpenAI の応答をファイルに保存する",
-  "save_response_to_file": true,
-
-  "_comment_load": "true なら保存済みファイルから DSL を読み込む（OpenAI に問い合わせない ai_enabled は無視）",
-  "load_response_from_file": true
+  "_comment_debug":"true のときは、画面にdebug情報を表示します",
+  "is_debug": true
 }

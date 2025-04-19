@@ -14,12 +14,25 @@ def read_lines(filepath):
 def replace_line_in_file(filepath, lineno, new_line):
     """
     指定ファイルの lineno（1始まり）の行を new_line に置き換える。
+    元の改行コード（\n または \r\n）を保持して上書きする。
     成功時は True、失敗時は False。
     """
     try:
         lines = read_lines(filepath)
         if 1 <= lineno <= len(lines):
-            lines[lineno - 1] = new_line.rstrip() + "\n"
+            old_line = lines[lineno - 1]
+
+            # 元の行の改行コードを判別
+            if old_line.endswith('\r\n'):
+                newline = '\r\n'
+            elif old_line.endswith('\n'):
+                newline = '\n'
+            else:
+                newline = ''  # 改行がなかった行（念のため）
+
+            # 新しい行に元の改行を付けて上書き
+            lines[lineno - 1] = new_line.rstrip() + newline
+
             with open(filepath, "w", encoding="utf-8") as f:
                 f.writelines(lines)
             return True
