@@ -1,11 +1,3 @@
-以下のように修正すると文法エラーが解消されます：
-
 ```python
-        if starting_block:
-            starting_block.topLevel = True
-            self.blocks.append(starting_block)
-
-    def add_block(self, block):
+self.blocks.append(starting_block)
 ```
-
-Pythonのリストへの追加(append)の構文が正しくなく、括弧が閉じられていないためエラーとなっています。修正後は適切に括弧を閉じることでエラーが解消されます。
