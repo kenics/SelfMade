@@ -1,10 +1,6 @@
 diff --git a/Sb3BlockGen/Script.py b/Sb3BlockGen/Script.py
 --- a/Sb3BlockGen/Script.py
 +++ b/Sb3BlockGen/Script.py
-@@ -1,5 +1 @@
--        if starting_block:
--            starting_block.topLevel = True
+@@ -1 +1 @@
 -            self.blocks.append(starting_block
--
--    def add_block(self, block):
 +self.blocks.append(starting_block)

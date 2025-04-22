@@ -16,6 +16,14 @@ def read_context_lines(filepath, lineno, context=2):
     end = min(len(lines), lineno + context)
     return [(i + 1, lines[i].rstrip()) for i in range(start, end)]
 
+def read_target_line_only(filepath, lineno):
+    with open(filepath, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+    if 1 <= lineno <= len(lines):
+        return lines[lineno - 1]
+    return ""
+
+
 def replace_line_in_file(filepath, lineno, new_line):
     """
     指定ファイルの lineno（1始まり）の行を new_line に置き換える。

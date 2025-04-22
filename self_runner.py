@@ -31,6 +31,7 @@ from fixer import (
 )
 from file_editor import (
     read_context_lines,
+    read_target_line_only,
     replace_line_in_file,
     replace_function_in_file,
     write_new_class_file,
@@ -86,7 +87,7 @@ def detect_error_type(log_text):
     return None
 
 def send_to_chatgpt(question, client, ai_enabled=True):
-    append_log(QA_LOG_PATH, "【質問】" + question)
+    append_log(QA_LOG_PATH, "【質問】\n" + question)
 
     if ai_enabled:
         response = client.chat.completions.create(
@@ -94,7 +95,8 @@ def send_to_chatgpt(question, client, ai_enabled=True):
             messages=[{"role": "user", "content": question}]
         )
         answer = response.choices[0].message.content
-        append_log(QA_LOG_PATH, "【回答】" + answer)
+        # nswer = answer.replace("```python\n", "").replace("```\n", "")
+        append_log(QA_LOG_PATH, "【回答】\n" + answer)
         with open(QATEMP_LOG_PATH, "w", encoding="utf-8") as f:
             f.write(answer)
         return answer
@@ -127,15 +129,15 @@ def main():
 
             print("\n--- 該当行とその前後 ---")
             context_lines = read_context_lines(abs_path, lineno)
-            for line_text in context_lines:
-                print(f"{line_text}")
+            for lineno_i, line_text in context_lines:
+                print(f"{lineno_i}: {line_text}")
 
             # context_code = "\n".join(line_text for _, line_text in context_lines)
             context_code = "\n".join(f"{lineno_i}: {line_text}" for lineno_i, line_text in context_lines)
             chatgpt_question = (
                 f"以下のPythonコードには文法エラーがあります。\n"
                 f"{lineno} 行目に問題があります。文法的に正しい形に修正してください：\n"
-                f"出力されるコードは、該当する{lineno} 行に対してだけにして他の行については回答に含めないでください\n"
+                f"出力されるコードは、該当する{lineno} 行目に対してだけにして他の行については回答に含めないでください\n"
                 f"```python\n{context_code}\n```"
             )
 
@@ -159,7 +161,7 @@ def main():
 
                 confirm = input("このコードで置き換えますか？（y[yes]/n[no]）: ").strip().lower()
                 if confirm in ("y", "yes"):
-                    original_lines = [line.rstrip() for _, line in context_lines]
+                    original_lines = [read_target_line_only(abs_path, lineno).rstrip()]
                     new_code_lines = [line.rstrip() for line in new_code_lines]
                     generate_diff_file(
                         original_lines=original_lines,

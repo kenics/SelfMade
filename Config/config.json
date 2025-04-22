@@ -4,7 +4,7 @@
   "_comment_model": "使用するモデル名 gpt-4 や gpt-3.5-turbo",
   "default_model": "gpt-4",
 
-  "_comment_ai": "true なら OpenAI に問い合わせる,false にするとオフラインモード(ask_chatgpt_for_dsl() をスキップ)",
+  "_comment_ai": "true なら OpenAI に問い合わせる,false にするとオフラインモード(client.chat.completions.create() をスキップ) QAtemp.txt から読み込む",
   "ai_enabled": false,
 
   "_comment_debug":"true のときは、画面にdebug情報を表示します",

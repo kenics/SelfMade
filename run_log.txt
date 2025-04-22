@@ -1199,3 +1199,78 @@ Traceback (most recent call last):
                       ^
 SyntaxError: '(' was never closed
 
+[2025-04-22 07:44:26] === 実行開始 ===
+
+Traceback (most recent call last):
+  File "D:\\EchoCodeForge\agent1.py", line 4, in <module>
+    agent = CodingAIAgent()
+            ^^^^^^^^^^^^^^^
+  File "D:\EchoCodeForge\Sb3BlockGen\CodingAIAgent.py", line 27, in __init__
+    self._prepare_dsl_env()
+  File "D:\EchoCodeForge\Sb3BlockGen\CodingAIAgent.py", line 39, in _prepare_dsl_env
+    from Sb3BlockGen.Script import Script
+  File "D:\EchoCodeForge\Sb3BlockGen\Script.py", line 8
+    self.blocks.append(starting_block
+                      ^
+SyntaxError: '(' was never closed
+
+[2025-04-22 07:46:11] === 実行開始 ===
+
+Traceback (most recent call last):
+  File "D:\\EchoCodeForge\agent1.py", line 4, in <module>
+    agent = CodingAIAgent()
+            ^^^^^^^^^^^^^^^
+  File "D:\EchoCodeForge\Sb3BlockGen\CodingAIAgent.py", line 27, in __init__
+    self._prepare_dsl_env()
+  File "D:\EchoCodeForge\Sb3BlockGen\CodingAIAgent.py", line 39, in _prepare_dsl_env
+    from Sb3BlockGen.Script import Script
+  File "D:\EchoCodeForge\Sb3BlockGen\Script.py", line 8
+    self.blocks.append(starting_block
+                      ^
+SyntaxError: '(' was never closed
+
+[2025-04-22 08:01:55] === 実行開始 ===
+
+Traceback (most recent call last):
+  File "D:\\EchoCodeForge\agent1.py", line 4, in <module>
+    agent = CodingAIAgent()
+            ^^^^^^^^^^^^^^^
+  File "D:\EchoCodeForge\Sb3BlockGen\CodingAIAgent.py", line 27, in __init__
+    self._prepare_dsl_env()
+  File "D:\EchoCodeForge\Sb3BlockGen\CodingAIAgent.py", line 39, in _prepare_dsl_env
+    from Sb3BlockGen.Script import Script
+  File "D:\EchoCodeForge\Sb3BlockGen\Script.py", line 8
+    self.blocks.append(starting_block
+                      ^
+SyntaxError: '(' was never closed
+
+[2025-04-22 08:18:07] === 実行開始 ===
+
+Traceback (most recent call last):
+  File "D:\\EchoCodeForge\agent1.py", line 4, in <module>
+    agent = CodingAIAgent()
+            ^^^^^^^^^^^^^^^
+  File "D:\EchoCodeForge\Sb3BlockGen\CodingAIAgent.py", line 27, in __init__
+    self._prepare_dsl_env()
+  File "D:\EchoCodeForge\Sb3BlockGen\CodingAIAgent.py", line 39, in _prepare_dsl_env
+    from Sb3BlockGen.Script import Script
+  File "D:\EchoCodeForge\Sb3BlockGen\Script.py", line 8
+    self.blocks.append(starting_block
+                      ^
+SyntaxError: '(' was never closed
+
+[2025-04-22 08:32:40] === 実行開始 ===
+
+Traceback (most recent call last):
+  File "D:\\EchoCodeForge\agent1.py", line 4, in <module>
+    agent = CodingAIAgent()
+            ^^^^^^^^^^^^^^^
+  File "D:\EchoCodeForge\Sb3BlockGen\CodingAIAgent.py", line 27, in __init__
+    self._prepare_dsl_env()
+  File "D:\EchoCodeForge\Sb3BlockGen\CodingAIAgent.py", line 39, in _prepare_dsl_env
+    from Sb3BlockGen.Script import Script
+  File "D:\EchoCodeForge\Sb3BlockGen\Script.py", line 8
+    self.blocks.append(starting_block
+                      ^
+SyntaxError: '(' was never closed
+
