@@ -38,7 +38,8 @@ from file_editor import (
     replace_line_in_file,
     replace_function_in_file,
     write_new_class_file,
-    generate_diff_file
+    generate_diff_file,
+    move_diff_to_done
 )
 from utils import (
     extract_python_code_from_response,
@@ -194,10 +195,10 @@ def main():
                         context=CONTEXT_NUM
                     )
 
+                    diff_filename = f"{abs_path.split(os.sep)[-1]}-dff.txt"
+                    diff_path = os.path.join(DIFF_DIR, diff_filename)
                     show_diff = input("修正後の diff を表示しますか？（y[yes]/n[no]）: ").strip().lower()
                     if show_diff in ("y", "yes"):
-                        diff_filename = f"{abs_path.split(os.sep)[-1]}-dff.txt"
-                        diff_path = os.path.join(DIFF_DIR, diff_filename)
                         if os.path.exists(diff_path):
                             with open(diff_path, "r", encoding="utf-8") as f:
                                 print("\n--- 差分内容 ---")
@@ -207,9 +208,6 @@ def main():
 
                     apply_diff = input("この差分をファイルに反映しますか？（y[yes]/n[no]）: ").strip().lower()
                     if apply_diff in ("y", "yes") and os.path.exists(diff_path):
-                        # os.system(f"git -C \"{PROJECT_ROOT}\" apply --unsafe-paths \"{diff_path}\"")
-                        # os.system(f"git -C \"{PROJECT_ROOT}\" apply \"{diff_path}\"")
-                        # os.system(f"git -C \"{BASE_DIR}\" apply --directory=\"{DIFF_ROOT}\" \"{diff_path}\"")
                         print(f"🛠 実行コマンド: git apply {diff_path} (cwd={PROJECT_ROOT})")
                         check_result = subprocess.run(
                             ["git", "apply", "--check", diff_path],
@@ -220,15 +218,18 @@ def main():
                             print("❌ パッチ適用チェック失敗:")
                             print(check_result.stderr)
                             return
+                        try:
+                            subprocess.run(
+                                ["git", "apply", diff_path],
+                                cwd=PROJECT_ROOT,
+                                shell=True,
+                                check=True  # ← 失敗時は例外を投げる
+                            )
+                            move_diff_to_done(diff_path, os.path.join(DIFF_DIR, "done"))
+                            print("✅ 差分を適用しました。")
+                        except subprocess.CalledProcessError:
+                            print("❌ 差分の適用に失敗しました。")
 
-                        # 実際に適用
-                        subprocess.run(
-                            ["git", "apply", diff_path],
-                            cwd=PROJECT_ROOT,
-                            shell=True
-                        )
-
-                        print("✅ 差分を適用しました。")
                     elif apply_diff != "yes":
                         print("⚠ 差分の適用をキャンセルしました。")
                 else:

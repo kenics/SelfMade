@@ -6,5 +6,5 @@ __pycache__/
 .env
 
 QA.txt
-Diff/old-*
+Diff/*
 run_log.txt

@@ -109,7 +109,6 @@ def write_new_class_file(project_root, class_name, code):
         return False
 
 def generate_diff_file(original_lines, new_lines, context_line_info, target_filepath, output_dir,lineno, context):
-# def generate_diff_file(original_lines, new_lines, context_line_info, target_filepath, output_dir):
     """
     差分ファイル（unified diff 形式）を <元ファイル名>-dff.txt として保存する。
 
@@ -158,11 +157,6 @@ def generate_diff_file(original_lines, new_lines, context_line_info, target_file
             break
     newline_code = os.linesep # 改行コードの取得
     with open(diff_filename, "w", encoding="utf-8", newline="\n") as f:
-        # f.writelines(line for line in diff)
-        #f.writelines(line + newline_code for line in diff)
-        # f.write(line + newline_code for line in diff)
-    # normalize_diff_file(diff_filename)
-    # with open(diff_filename, "w", encoding="utf-8") as f:
         for line in diff:
             if not line.endswith("\n"):
                 f.write(line + "\n")
@@ -171,3 +165,31 @@ def generate_diff_file(original_lines, new_lines, context_line_info, target_file
 
 
     print(f"✅ 差分ファイルを生成しました: {diff_filename}")
+
+def get_max_sequence_in_done(base_name, done_dir):
+    """
+    done_dir 内の base_name に関連するファイル名の最大連番を取得する。
+    例: base_name='Script.py' → Script.py-01-dff.txt を探す。
+    """
+    max_seq = 0
+    for filename in os.listdir(done_dir):
+        if filename.startswith(base_name) and filename.endswith("-dff.txt"):
+            parts = filename.replace("-dff.txt", "").split("-")
+            if len(parts) >= 2 and parts[-1].isdigit():
+                seq = int(parts[-1])
+                if seq > max_seq:
+                    max_seq = seq
+    return max_seq
+
+def move_diff_to_done(diff_filepath, done_dir):
+    """
+    diff_filepath を done_dir に移動し、連番付きファイル名にする。
+    """
+    os.makedirs(done_dir, exist_ok=True)
+    base_name = os.path.basename(diff_filepath).replace("-dff.txt", "")
+    max_seq = get_max_sequence_in_done(base_name, done_dir)
+    next_seq = max_seq + 1
+    new_filename = f"{base_name}-{next_seq:02d}-dff.txt"
+    dest_path = os.path.join(done_dir, new_filename)
+    os.rename(diff_filepath, dest_path)
+    print(f"✅ 差分ファイルを {dest_path} に移動しました。")
