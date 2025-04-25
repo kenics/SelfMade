@@ -6,7 +6,7 @@ def read_lines(filepath):
     with open(filepath, "r", encoding="utf-8") as f:
         return f.readlines()
 
-def read_context_lines(filepath, lineno, context=2):
+def read_context_lines(filepath, lineno, context):
     """
     指定された行番号を中心に前後の context 行数を含めて返す。
     戻り値: [(行番号, 行テキスト), ...]
@@ -108,7 +108,8 @@ def write_new_class_file(project_root, class_name, code):
         print(f"ファイル作成エラー: {e}")
         return False
 
-def generate_diff_file(original_lines, new_lines, context_line_info, target_filepath, output_dir):
+def generate_diff_file(original_lines, new_lines, context_line_info, target_filepath, output_dir,lineno, context):
+# def generate_diff_file(original_lines, new_lines, context_line_info, target_filepath, output_dir):
     """
     差分ファイル（unified diff 形式）を <元ファイル名>-dff.txt として保存する。
 
@@ -118,6 +119,7 @@ def generate_diff_file(original_lines, new_lines, context_line_info, target_file
     - context_line_info: [(行番号, 行内容)] のリスト（見た目確認のため）
     - target_filepath: 修正対象の .py ファイルの絶対パス
     - output_dir: 差分ファイルの保存先（通常は BASE_DIR/Diff）
+    -- lineno:エラー発生の行番号
     """
     project_root = os.environ.get("PROJECT_ROOT")
     if not project_root:
@@ -136,10 +138,36 @@ def generate_diff_file(original_lines, new_lines, context_line_info, target_file
         new_lines,
         fromfile=f"a/{rel_path}",
         tofile=f"b/{rel_path}",
-        lineterm=""
+        lineterm="",
+        n=context  # 前後の行のコンテキスト
     ))
 
-    with open(diff_filename, "w", encoding="utf-8") as f:
-        f.writelines(line + "\n" for line in diff)
+    # context_line_info の最初の行番号を取得
+    # start_lineno = lineno
+    start_lineno = context_line_info[0][0]
+    # 削除行数・追加行数を算出
+    delete_count = len(original_lines)
+    add_count = len(new_lines)
+
+    # ハンクヘッダー（@@ -x +x @@）の行番号を書き換え
+    diff = list(diff)
+    for i, line in enumerate(diff):
+        if line.startswith("@@ "):
+            # diff[i] = f"@@ -{start_lineno} +{start_lineno} @@"
+            diff[i] = f"@@ -{start_lineno},{delete_count} +{start_lineno},{add_count} @@"
+            break
+    newline_code = os.linesep # 改行コードの取得
+    with open(diff_filename, "w", encoding="utf-8", newline="\n") as f:
+        # f.writelines(line for line in diff)
+        #f.writelines(line + newline_code for line in diff)
+        # f.write(line + newline_code for line in diff)
+    # normalize_diff_file(diff_filename)
+    # with open(diff_filename, "w", encoding="utf-8") as f:
+        for line in diff:
+            if not line.endswith("\n"):
+                f.write(line + "\n")
+            else:
+                f.write(line)
+
 
     print(f"✅ 差分ファイルを生成しました: {diff_filename}")

@@ -17,6 +17,9 @@ QATEMP_LOG_PATH = os.path.join(BASE_DIR, "QAtemp.txt")
 DIFF_DIR = os.path.join(BASE_DIR, "Diff")
 os.makedirs(DIFF_DIR, exist_ok=True)
 
+# --- 定数 ---
+CONTEXT_NUM = 5
+
 # --- モジュール検索パス追加 ---
 sys.path.append(os.path.join(BASE_DIR, "Config"))
 sys.path.append(os.path.join(BASE_DIR, "AutoFixer"))
@@ -128,7 +131,7 @@ def main():
             print(f"\n対象ファイル: {filepath}（{lineno}行目）")
 
             print("\n--- 該当行とその前後 ---")
-            context_lines = read_context_lines(abs_path, lineno)
+            context_lines = read_context_lines(abs_path, lineno,CONTEXT_NUM)
             for lineno_i, line_text in context_lines:
                 print(f"{lineno_i}: {line_text}")
 
@@ -143,12 +146,11 @@ def main():
 
             print("\n=== ChatGPT に送信する質問内容 ===\n")
             print(chatgpt_question)
-            print("\nこの内容で問い合わせますか？（yes で問い合わせを実行）")
+            print("\nこの内容で問い合わせますか？（y[yes] で実行）")
             confirm = input("> ").strip().lower()
-            if confirm != "yes":
+            if confirm not in ("yes", "y"):
                 print("ChatGPTに問い合わせず、終了しました。")
                 return
-
             answer = send_to_chatgpt(chatgpt_question, client, ai_enabled)
             print("ChatGPTの回答:\n", answer)
 
@@ -161,14 +163,35 @@ def main():
 
                 confirm = input("このコードで置き換えますか？（y[yes]/n[no]）: ").strip().lower()
                 if confirm in ("y", "yes"):
-                    original_lines = [read_target_line_only(abs_path, lineno).rstrip()]
+                    # original_lines = [read_target_line_only(abs_path, lineno).rstrip()]
+                    original_lines = [line.rstrip() for _, line in context_lines]
                     new_code_lines = [line.rstrip() for line in new_code_lines]
+
+                    # インデントを変更前に揃える
+                    # original_indent = len(original_lines[0]) - len(original_lines[0].lstrip())
+                    target_line = next(line for line_no, line in context_lines if line_no == lineno)
+                    original_indent = len(target_line) - len(target_line.lstrip())
+                    # new_code_lines = [" " * original_indent + line.lstrip() for line in new_code_lines]
+                    # new_code_lines = [
+                    #    (" " * original_indent + line.lstrip()) if line.strip() else ""
+                    #    for line in new_code_lines
+                    # ]
+                    combined_new_lines = []
+                    for i, (_, orig_line) in enumerate(context_lines):
+                        if context_lines[i][0] == lineno:
+                            combined_new_lines.append(" " * original_indent + new_code_lines[0].lstrip())
+                        else:
+                            combined_new_lines.append(orig_line)
+                    new_code_lines = combined_new_lines
+
                     generate_diff_file(
                         original_lines=original_lines,
                         new_lines=new_code_lines,
                         context_line_info=context_lines,
                         target_filepath=os.path.abspath(abs_path),
-                        output_dir=DIFF_DIR
+                        output_dir=DIFF_DIR,
+                        lineno = lineno,
+                        context=CONTEXT_NUM
                     )
 
                     show_diff = input("修正後の diff を表示しますか？（y[yes]/n[no]）: ").strip().lower()
@@ -188,12 +211,22 @@ def main():
                         # os.system(f"git -C \"{PROJECT_ROOT}\" apply \"{diff_path}\"")
                         # os.system(f"git -C \"{BASE_DIR}\" apply --directory=\"{DIFF_ROOT}\" \"{diff_path}\"")
                         print(f"🛠 実行コマンド: git apply {diff_path} (cwd={PROJECT_ROOT})")
-                        subprocess.run(
+                        check_result = subprocess.run(
                             ["git", "apply", "--check", diff_path],
                             cwd=PROJECT_ROOT,
                             check=True
                         )
+                        if check_result.returncode != 0:
+                            print("❌ パッチ適用チェック失敗:")
+                            print(check_result.stderr)
+                            return
 
+                        # 実際に適用
+                        subprocess.run(
+                            ["git", "apply", diff_path],
+                            cwd=PROJECT_ROOT,
+                            shell=True
+                        )
 
                         print("✅ 差分を適用しました。")
                     elif apply_diff != "yes":
@@ -209,9 +242,9 @@ def main():
 
         print("\n=== ChatGPT に送信する質問内容 ===\n")
         print(question)
-        print("\nこの内容で問い合わせますか？（yes で実行）")
+        print("\nこの内容で問い合わせますか？（y[yes] で実行）")
         confirm = input("> ").strip().lower()
-        if confirm != "yes":
+        if confirm not in ("yes", "y"):
             print("ChatGPTに問い合わせず、終了しました。")
             return
 
